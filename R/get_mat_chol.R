@@ -61,8 +61,8 @@ get_mat_chol  <- function(y_lin, x_lin, endog_data, specs){
   if (is.null(chol_decomp)){
     A             <- t(chol(cov_var))
   } else {
-    A <- SVAR(VAR(modelo_endo,
-                  p = results_nl$specs$lags_endog_nl),
+    A <- SVAR(VAR(endog_data,
+                  p = specs$lags_endog_nl),
               p = specs$lags_endog_nl, 
               Amat = specs$chol_decomp,
               max.iter = 10000)$A
