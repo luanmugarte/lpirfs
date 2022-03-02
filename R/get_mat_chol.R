@@ -57,12 +57,22 @@ get_mat_chol  <- function(y_lin, x_lin, endog_data, specs){
   cov_var       <- stats::cov(resid_all)
 
   # Cholesky decomposition
-  A             <- t(chol(cov_var))
+  # New conditional added to allow custom Cholesky decomposition
+  if (is.null(chol_decomp)){
+    A             <- t(chol(cov_var))
+  } else {
+    A <- SVAR(VAR(modelo_endo,
+                  p = results_nl$specs$lags_endog_nl),
+              p = specs$lags_endog_nl, 
+              Amat = specs$chol_decomp,
+              max.iter = 10000)$A
+  }
   D             <- diag(sqrt(diag(cov_var)))
 
   # Shock Matrix
   d <- matrix(NaN, specs$endog, specs$endog)
-
+      
+      # Std dev shock
       if (specs$shock_type == 0){
 
         for (i in 1:specs$endog){
@@ -72,7 +82,7 @@ get_mat_chol  <- function(y_lin, x_lin, endog_data, specs){
         }
 
                 } else {
-
+      # Unit shock
         for (i in 1:specs$endog){
           d[, i]     <-  A[, i]/A[i, i]
 

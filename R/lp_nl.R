@@ -42,6 +42,9 @@
 #'                      The row length has to be the same as \emph{endog_data}.
 #'@param num_cores Integer. The number of cores to use for the estimation. If NULL, the function will
 #'                 use the maximum number of cores minus one.
+#'@param chol_decomp Matrix. A specified matrix (KxK) used to estimate the structural matrix shock in the Cholesky decomposition convention. 
+#'                 If NULL (default), returns a matrix given by the Cholesky decomposition of the covariance matrix of the reduced form 
+#'                 residuals (general approach used in the original package).
 #'
 #'@seealso \url{https://adaemmerp.github.io/lpirfs/README_docs.html}
 #'
@@ -78,6 +81,10 @@
 #'             lagged data (y_nl and x_nl) used for the irf estimations, and the selected lag lengths when an information criterion has been used.}
 #'
 #'\item{fz}{A vector containing the values of the transition function F(z_{t-1}).}
+#'
+#' Adition in relation to the original package.
+#' 
+#'\item{d}{A matrix containing the values for the shock matrix.}#'
 #'
 #' @export
 #'
@@ -224,7 +231,9 @@ lp_nl <- function(endog_data,
                                exog_data      = NULL,
                                lags_exog      = NULL,
                                contemp_data   = NULL,
-                               num_cores      = 1){
+                               num_cores      = 1,
+                               # New argument
+                               chol_decomp    = NULL){
 
   # Create list to store inputs
     specs <- list()
@@ -246,6 +255,7 @@ lp_nl <- function(endog_data,
     specs$gamma          <- gamma
     specs$exog_data      <- exog_data
     specs$lags_exog      <- lags_exog
+    specs$chol_decomp    <- chol_decomp
 
     specs$use_nw         <- use_nw
     specs$nw_prewhite    <- nw_prewhite
@@ -253,7 +263,8 @@ lp_nl <- function(endog_data,
     specs$nw_lag         <- nw_lag
 
 
-    # Add 'contempranoeus' as NULL for data construction
+
+    # Add 'contemporanoeus' as NULL for data construction
     specs$contemp_data   <- NULL
     # Set model type for lag construction
     specs$model_type     <- 0
@@ -750,7 +761,8 @@ lp_nl <- function(endog_data,
                          irf_s2_up       = irf_s2_up,
                          fz              = fz,
                          specs           = specs,
-                         diagnostic_list = diagnostic_list)
+                         diagnostic_list = diagnostic_list,
+                         d               = d)
 
  # Give object S3 name
  class(result) <- "lpirfs_nl_obj"
