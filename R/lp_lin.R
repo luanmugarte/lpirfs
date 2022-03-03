@@ -24,6 +24,9 @@
 #' @param num_cores NULL or Integer. The number of cores to use for the estimation. If NULL, the function will
 #'                 use the maximum number of cores minus one.
 #'
+#' @param chol_decomp Matrix. A specified matrix (KxK) used to estimate the structural matrix shock in the Cholesky decomposition convention. 
+#'                 If NULL (default), returns a matrix given by the Cholesky decomposition of the covariance matrix of the reduced form 
+#'                 residuals (general approach used in the original package).
 #' @seealso \url{https://adaemmerp.github.io/lpirfs/README_docs.html}
 #'
 #' @return A list containing:
@@ -47,6 +50,10 @@
 #'
 #'\item{specs}{A list with properties of \emph{endog_data} for the plot function. It also contains
 #'             lagged data (y_lin and x_lin) used for the irf estimations, and the selected lag lengths when an information criterion has been used.}
+#'
+#'#' Adition in relation to the original package.
+#' 
+#'\item{d}{A matrix containing the values for the shock matrix.}#'
 #'
 #' @export
 #' @references
@@ -151,7 +158,9 @@ lp_lin <- function(endog_data,
                         exog_data      = NULL,
                         lags_exog      = NULL,
                         contemp_data   = NULL,
-                        num_cores      = 1){
+                        num_cores      = 1,
+                        # New argument
+                        chol_decomp    = NULL){
 
 
   # Create list to store inputs
@@ -171,6 +180,8 @@ lp_lin <- function(endog_data,
     specs$nw_prewhite    <- nw_prewhite
     specs$adjust_se      <- adjust_se
     specs$nw_lag         <- nw_lag
+    specs$chol_decomp    <- chol_decomp
+    
 
 
   # Set 2SLS option to FALSE
@@ -560,7 +571,8 @@ lp_lin <- function(endog_data,
                   irf_lin_low       = irf_lin_low,
                   irf_lin_up        = irf_lin_up,
                   diagnostic_list   = diagnostic_list,
-                  specs             = specs)
+                  specs             = specs,
+                  d                 = d)
 
   # Give object S3 name
   class(result) <- "lpirfs_lin_obj"
