@@ -49,7 +49,6 @@ get_mat_chol  <- function(y_lin, x_lin, endog_data, specs){
     resids_all  <- lapply(y_data, get_resids_ols, x_data)
 
   }
-
   # Make matrix of residuals
   resid_all     <- matrix(unlist(resids_all), ncol = specs$endog, byrow = F )
 
@@ -58,15 +57,17 @@ get_mat_chol  <- function(y_lin, x_lin, endog_data, specs){
 
   # Cholesky decomposition
   # New conditional added to allow custom Cholesky decomposition
-  if (is.null(chol_decomp)){
+
+  if (is.null(specs$chol_decomp)){
     A             <- t(chol(cov_var))
   } else {
-    A <- SVAR(VAR(endog_data,
-                  p = specs$lags_endog_nl),
-              p = specs$lags_endog_nl, 
+    A <- SVAR(vars::VAR(endog_data, type = 'const', ic = 'HQ',
+                        p = specs$lags_endog_lin),
+              p = specs$lags_endog_lin, 
               Amat = specs$chol_decomp,
               max.iter = 10000)$A
   }
+  
   D             <- diag(sqrt(diag(cov_var)))
 
   # Shock Matrix
@@ -91,5 +92,4 @@ get_mat_chol  <- function(y_lin, x_lin, endog_data, specs){
 
   # Return shock matrix
   return(d)
-
 }
