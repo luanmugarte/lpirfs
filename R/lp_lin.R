@@ -308,7 +308,7 @@ lp_lin <- function(endog_data,
   specs$x_lin        <- x_lin
 
  # Construct shock matrix
-  d <- get_mat_chol_v2(y_lin, x_lin, endog_data, specs)
+  d <- get_mat_chol(y_lin, x_lin, endog_data, specs)
  
  # Matrices to store OLS parameters
   b1            <- matrix(NaN, specs$endog, specs$endog)
