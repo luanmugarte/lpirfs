@@ -82,10 +82,18 @@
 #'
 #'\item{fz}{A vector containing the values of the transition function F(z_{t-1}).}
 #'
-#' Adition in relation to the original package.
+#' Aditions in relation to the original package.
 #' 
-#'\item{d}{A matrix containing the values for the shock matrix.}#'
+#'\item{d}{A matrix containing the values for the shock matrix.}
 #'
+#'\item{b_store_s1}{An array of matrices containing the estimated coefficients for the first lag (used in IRFs) of the 
+#'                   regressions run by each horizon for regime 1.}
+#'\item{b_store_s2}{An array of matrices containing the estimated coefficients for the first lag (used in IRFs) of the
+#'                   regressions run by each horizon for regime 2.}
+#'\item{stderr_store_s1}{An array of matrices containing the estimated standard errors for the first lag (used in the IRFs' CI)
+#'                       of the regressions run by each horizon on regime 1.}
+#'\item{stderr_store_s2}{An array of matrices containing the estimated standard errors for the first lag (used in the IRFs' CI)
+#'                       of the regressions run by each horizon on regime 2.}#'
 #' @export
 #'
 #' @references
@@ -468,6 +476,14 @@ lp_nl <- function(endog_data,
   b1_s2      <- matrix(NaN, specs$endog, specs$endog)
   b1_low_s2  <- matrix(NaN, specs$endog, specs$endog)
   b1_up_s2   <- matrix(NaN, specs$endog, specs$endog)
+  
+  # Matrices to store OLS parameters for regime 1 & 2 and return in final result
+  
+  b_store_s1 <- array(NaN, dim = c(specs$endog,specs$endog ,specs$hor))
+  b_store_s2 <- array(NaN, dim = c(specs$endog,specs$endog ,specs$hor))
+  
+  stderr_store_s1 <- array(NaN, dim = c(specs$endog,specs$endog ,specs$hor))
+  stderr_store_s2 <- array(NaN, dim = c(specs$endog,specs$endog ,specs$hor))
 
   # Define coefficient position to extract regime_1 and regime_2 parameters in loop
   start_nl_s1   <- 2
@@ -536,6 +552,16 @@ lp_nl <- function(endog_data,
            b1_s2[k, ]       <-   b[samp_nl_s2]
            b1_low_s2[k, ]   <-   b[samp_nl_s2] - std_err[samp_nl_s2]
            b1_up_s2[k, ]    <-   b[samp_nl_s2] + std_err[samp_nl_s2]
+           
+           # Condititional to avoid storing the same matrix multiple times
+           if (s == 1){
+           # Store estimated coefficients and standard errors in matrices from
+           # lag 1 in horizon h
+           b_store_s1[k,,h] <- b[samp_nl_s1]
+           b_store_s2[k,,h] <- b[samp_nl_s2]
+           stderr_store_s1[k,,h] <- std_err[samp_nl_s1]
+           stderr_store_s2[k,,h] <- std_err[samp_nl_s2]
+           }
 
            # Get diagnostocs for summary
            get_diagnost              <- lpirfs::ols_diagnost(yy[, k], xx)
@@ -568,15 +594,19 @@ lp_nl <- function(endog_data,
 
     list(irf_temp_s1_mean, irf_temp_s1_low, irf_temp_s1_up,
          irf_temp_s2_mean, irf_temp_s2_low, irf_temp_s2_up,
-         diagnost_ols_each_h)
+         diagnost_ols_each_h,
+         b_store_s1,b_store_s2,
+         stderr_store_s1,stderr_store_s2)
 
-}
-
+  }
+  
+  
+  
   # List to save diagnostics
   diagnostic_list <- list()
 
  # Fill arrays with irfs
- for(i in 1:specs$endog){
+  for(i in 1:specs$endog){
 
    # Fill irfs
    irf_s1_mean[, , i] <- as.matrix(do.call(rbind, nl_irfs[[i]][1]))
@@ -599,9 +629,16 @@ lp_nl <- function(endog_data,
    # Fill list with all OLS diagnostics
    diagnostic_list[[i]]        <- nl_irfs[[i]][[7]]
 
-
- }
-
+  }
+  
+  # Getting estimated coefficients and standard errors matrices from nl_irfs obj
+  b_store_s1      <- nl_irfs[[1]][8]
+  b_store_s2      <- nl_irfs[[1]][9]
+  stderr_store_s1 <- nl_irfs[[1]][10]
+  stderr_store_s2 <- nl_irfs[[1]][11]
+  
+  
+    
   # Give names to diagnostic List
   names(diagnostic_list) <- paste("Shock:", specs$column_names, sep = " ")
 
@@ -762,7 +799,16 @@ lp_nl <- function(endog_data,
                          fz              = fz,
                          specs           = specs,
                          diagnostic_list = diagnostic_list,
-                         d               = d)
+                         d               = d,
+                         b_store_s1      = b_store_s1,
+                         b_store_s2      = b_store_s2,
+                         stderr_store_s1 = stderr_store_s1,
+                         stderr_store_s2 = stderr_store_s2
+                         )
+
+ 
+ 
+ 
 
  # Give object S3 name
  class(result) <- "lpirfs_nl_obj"
@@ -772,3 +818,4 @@ lp_nl <- function(endog_data,
 
 
 }
+
